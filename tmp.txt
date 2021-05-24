@@ -1,0 +1,3 @@
+    Finished release [optimized] target(s) in 0.01s
+     Running `target/release/tester in/0099.txt ./a.out`
+Score = 888934139
