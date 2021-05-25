@@ -178,7 +178,7 @@ vector<vector<pair<int,int64>>> get_edge(vector<vector<pair<int,int64>>> const& 
     vector<int> div_position_h(N, N); //前半と後半で
     vector<int> div_position_w(N, N); //前半と後半で
 
-    const int MAX_D = 2000 * 2;
+    const int MAX_D = 2000 * 2 + 2000;
 
     //列のグループ分け
     REP(h,N){
@@ -348,6 +348,15 @@ int main(){
 
 /*
     クエリ * (dijkstra + 辺重み再編成)
+
+    各辺の推定重みはちゃんと保存しておくんだけど、そのクエリに対する辺重み計算するときに以下のことをする
+
+    推定重みが正しいとして、列の中で前半と後半に分ける
+    このとき、閾値はmax(d)×2くらい
+    このあと、
+    1.列の中の辺で重みついてない辺はグループの辺重み平均で計算
+    2.辺で重みついている辺は辺の重みをそのまま
+
 
     100ケース
     average 903625993.97

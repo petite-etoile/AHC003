@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on package cache
+    Finished release [optimized] target(s) in 0.04s
+     Running `target/release/tester in/0818.txt ./a.out`
+Score = 936261803

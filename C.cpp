@@ -187,6 +187,8 @@ vector<vector<pair<int,int64>>> get_edge(vector<vector<pair<int,int64>>> const& 
             }
         }
     }
+    debug(edge)
+    exit(0);
     return edge;
 }
 
