@@ -2,6 +2,9 @@
     Blocking waiting for file lock on package cache
     Blocking waiting for file lock on package cache
     Blocking waiting for file lock on build directory
-    Finished release [optimized] target(s) in 0.11s
+    Finished release [optimized] target(s) in 0.08s
      Running `target/release/tester in/0031.txt ./a.out`
-Score = 889036606
+パラメータ
+K: 8
+init_cost: 0
+Score = 885453821

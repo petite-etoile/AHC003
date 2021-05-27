@@ -5,4 +5,4 @@
     Blocking waiting for file lock on build directory
     Finished release [optimized] target(s) in 0.09s
      Running `target/release/tester in/0956.txt ./a.out`
-Score = 936764139
+Score = 936051829

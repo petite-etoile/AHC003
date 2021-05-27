@@ -5,7 +5,7 @@ cnt = 0
 score_sum = 0
 
 
-loop_num = 1000
+loop_num = 100
 max_process = 8
 proc_list = []
 
