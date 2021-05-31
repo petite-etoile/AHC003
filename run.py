@@ -5,14 +5,18 @@ cnt = 0
 score_sum = 0
 
 
-loop_num = 100
-max_process = 8
+loop_num = 1000
+max_process = 6
 proc_list = []
+
+cmd = ["./a.out"]
+# cmd = ["python", "simple_solution.py"]
+
 
 for i in range(loop_num):
     print(i)
     input_file = "in/{:0>4}.txt".format(i)
-    command_draw = ["cargo","run","--release","--bin","tester", input_file, "./a.out"]
+    command_draw = ["cargo","run","--release","--bin","tester", input_file, *cmd]
     with open("out","w") as for_stdout:
         with open("tmp/tmp{:0>4}.txt".format(i), "w") as f:
             proc = Popen(command_draw,stderr=f,stdout=for_stdout)

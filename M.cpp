@@ -111,10 +111,10 @@ bool is_inside(pair<int,int> position){
 
 
 
-vector<int> dijkstra(vector<vector<pair<int,int64>>> const& edge, int start){
+vector<int> dijkstra(vector<vector<pair<int,int64>>> const& edge, int source, int target){
     vector<int64> distances(node_num,INF);
     priority_queue<pair<int64,int>,vector<pair<int64,int>>, greater<pair<int64,int>> > que;
-    que.push(mp(0, start));
+    que.push(mp(0, source));
     vector<bool> visited(node_num,false);
     vector<int> move_from(node_num, -1);
     
@@ -134,7 +134,7 @@ vector<int> dijkstra(vector<vector<pair<int,int64>>> const& edge, int start){
             }
         }
     }
-
+    // debug(distances[target])
     return move_from;
 }
 
@@ -161,40 +161,149 @@ string encode_to_ans(int const& source, int const& target, vector<int> const& mo
 }
 
 string solve(int const& source, int const& target, vector<vector<pair<int,int64>>> const& edge){
-    auto move_from = dijkstra(edge, source);
+    auto move_from = dijkstra(edge, source, target);
     string ans = encode_to_ans(source, target, move_from);
     return ans;
 }
 
+pair<int,int64> add_pairs(pair<int,int64> const& A, pair<int,int64> const& B){
+    return make_pair(A.first+B.first, A.second+B.second);
+}
+
+pair<int,int64> sub_pairs(pair<int,int64> const& A, pair<int,int64> const& B){
+    return make_pair(A.first-B.first, A.second-B.second);
+}
+
+void add_edge_by_nears(int const& from_, int const& next_, pair<int,int64> info_nears, vector<vector<pair<int,int64>>>& edge, int init_cost){
+    if(info_nears == mp(0,0LL)){
+        edge[next_].emplace_back(from_, init_cost);
+        edge[from_].emplace_back(next_, init_cost);
+    }else{
+        edge[next_].emplace_back(from_, info_nears.second / info_nears.first);
+        edge[from_].emplace_back(next_, info_nears.second / info_nears.first);
+    }
+}
+
+
+bool flag = false;
 vector<vector<pair<int,int64>>> get_edge(vector<vector<pair<int,int64>>> const& estimated_edge){
-    const int64 init_cost = 1000; //考慮するべき
+    const int64 init_cost = 3000; //考慮するべき
     vector<vector<pair<int,int64>>> edge(node_num);
+
+    const int cost_range = 8; //前後何個の情報で辺の重みを決定するか
+    const int coef = 5; //自分の辺の情報の重み付け
+
+    if(!flag){
+        flag = true;
+        cerr << "パラメータ\n";
+        debug(cost_range)
+        debug(init_cost)
+        debug(coef)
+    }
+
+    //列
     REP(h,N){
-        REP(w,N){
-            for(auto dhdw:dxdy){
-                int dh,dw; tie(dh,dw) = dhdw;
-                pair<int,int> to = make_pair(h+dh, w+dw);
-                if(is_inside(to)){
-                    if(estimated_edge[encode(to)][encode(h,w)] == mp(0,0LL)){
-                        edge[encode(h,w)].emplace_back( encode(to), init_cost );
-                    } else {
-                        int cnt; int64 cost_sum; 
-                        tie(cnt, cost_sum) = estimated_edge[encode(to)][encode(h,w)];
-                        edge[encode(h,w)].emplace_back( encode(to), cost_sum/cnt );
-                    }
-                    assert(estimated_edge[encode(to)][encode(h,w)] == estimated_edge[encode(h,w)][encode(to)]);
-                }
+        //累積和計算
+        vector<pair<int,int64>> cumsum(N, mp(0,0));
+        REP(w,N-1){
+            pair<int,int> next_ = make_pair(h,w+1);
+            cumsum[w+1] = add_pairs(cumsum[w], estimated_edge[encode(h,w)][encode(next_)]);
+        }
+
+        //前後K個ずつを使って辺重み計算
+        REP(w,N-1){
+            pair<int,int> next_ = make_pair(h,w+1);
+            pair<int,int64> info_nears = sub_pairs(cumsum[min(N-1, w+cost_range)], cumsum[max(0, w-cost_range)]); //前後K個での和
+            
+            REP(_,coef){
+                info_nears = add_pairs(info_nears, estimated_edge[encode(h,w)][encode(next_)]); //自分の辺の情報は重めに評価する
+            }
+
+            add_edge_by_nears(encode(h,w), encode(next_), info_nears, edge, init_cost);
+        }   
+    }
+
+    //行
+    REP(w,N){
+        //累積和計算
+        vector<pair<int,int64>> cumsum(N, mp(0,0));
+        REP(h,N-1){
+            pair<int,int> next_ = make_pair(h+1,w);
+            cumsum[h+1] = add_pairs(cumsum[h], estimated_edge[encode(h,w)][encode(next_)]);
+        }
+
+        //前後K個ずつを使って辺重み計算
+        REP(h,N-1){
+            pair<int,int> next_ = make_pair(h+1,w);
+            pair<int,int64> info_nears = sub_pairs(cumsum[min(N-1, h+cost_range)], cumsum[max(0, h-cost_range)]); //前後K個での和
+
+            REP(_,coef){
+                info_nears = add_pairs(info_nears, estimated_edge[encode(h,w)][encode(next_)]); //自分の辺の情報は重めに評価する
+            }
+
+            add_edge_by_nears(encode(h,w), encode(next_), info_nears, edge, init_cost);
+        }   
+    }
+    
+    return edge;    
+}
+
+void show_edge(vector<vector<pair<int,int64>>> const& edge){
+    vector<vector<int64>> edge_h(N, vector<int64>(N, -1)), edge_w(N, vector<int64>(N, -1));
+    REP(node,node_num){
+        int h,w; tie(h,w) = decode(node);
+        for(auto e:edge[node]){
+            int to; int64 cost;
+            tie(to,cost) = e;
+            int to_h, to_w; tie(to_h,to_w)=decode(to);
+            if(to_h-h == 1){
+                edge_h[h][w] = cost;
+            }else if(to_w-w == 1){
+                edge_w[h][w] = cost;
             }
         }
     }
-    debug(edge)
-    exit(0);
-    return edge;
+
+    cerr << "\n";
+    REP(h,N){
+        cerr << h << ":";
+        REP(w,N){
+            cerr << edge_h[h][w] << " ";
+        } cerr << "\n";
+    }
+
+    cerr << "\n";
+    REP(h,N){
+        cerr << h << ":";
+        REP(w,N){
+            cerr << edge_w[h][w] << " ";
+        } cerr << "\n";
+    }
+
 }
 
 void re_eval_costs(int source, int target, string ans, int given_path_length, vector<vector<pair<int,int64>>> & estimated_edge){
+
+    vector<int> RunLength;
+    char before = ' ';
+    for(auto move:ans){
+        if(move == before) RunLength.back()++;
+        else RunLength.emplace_back(1);
+        before = move;
+    }
+    // debug(ans)
+    // debug(RunLength)
+
     int now_position = source;
+    int idx = 0;
+    before = ans[0];
     for(char move:ans){
+        if(before!=move){
+            idx++;
+            before = move;
+        }
+        int64 coef = 1000000LL*RunLength[idx]*RunLength[idx]/(ans.size()*ans.size()); //行動の中でその行/列の辺をどれだけ使っているか
+
         int now_h,now_w,to_h,to_w;
         tie(now_h, now_w) = decode(now_position);
         
@@ -212,13 +321,20 @@ void re_eval_costs(int source, int target, string ans, int given_path_length, ve
         to_h = now_h + dh;
         to_w = now_w + dw;
 
-        int cnt = estimated_edge[now_position][encode(to_h, to_w)].first + 1;
-        int64 cost_sum = estimated_edge[now_position][encode(to_h, to_w)].second + given_path_length/ans.size();
-        estimated_edge[now_position][encode(to_h, to_w)] = mp(cnt, cost_sum);
-        estimated_edge[encode(to_h, to_w)][now_position] = mp(cnt, cost_sum);
+        
+        if(RunLength[idx] > 1 or true){//ans.size()/10){
+            int cnt = estimated_edge[now_position][encode(to_h, to_w)].first + coef * 1;
+            int64 cost_sum = estimated_edge[now_position][encode(to_h, to_w)].second + (coef * given_path_length/ans.size());
+            estimated_edge[now_position][encode(to_h, to_w)] = mp(cnt, cost_sum);
+            estimated_edge[encode(to_h, to_w)][now_position] = mp(cnt, cost_sum);
+            assert(cost_sum >= 0);
+            assert(cnt >= 0);
+        }
 
         now_position = encode(to_h, to_w);
     }
+
+    // debug(mp(ans, RunLength))
     assert(now_position == target); 
 }
 
@@ -226,16 +342,20 @@ int main(){
     cin.tie(nullptr);
     ios::sync_with_stdio(false);
     const int Query_num = 1000;
-
     vector<vector<pair<int,int64>>> estimated_edge(N*N, vector<pair<int,int64>>(N*N, mp(0,0))); //estimated_edge[u][v]:u,vを結ぶ辺の評価回数と重み合計
 
     REP(_,Query_num){
+        // debug(_)
         pair<int,int> source, target;
         auto edge = get_edge(estimated_edge);
+        // show_edge(edge);
         cin >> source.first >> source.second >> target.first >> target.second;
         string ans = solve(encode(source), encode(target), edge);
         cout << ans << endl;
         int given_path_length; cin >> given_path_length;
+        // debug(source)
+        // debug(target)
+        // debug(given_path_length)
         re_eval_costs(encode(source), encode(target), ans, given_path_length, estimated_edge);
     }
 
@@ -245,8 +365,19 @@ int main(){
 /*
     クエリ * (dijkstra + 辺重み再編成)
 
-    100ケース
-    average 890105743.04
-    python3 run.py  52.72s user 4.79s system 99% cpu 57.828 total
+    各辺の推定重みはちゃんと保存しておくんだけど、そのクエリに対する辺重み計算するときに以下のことをする
 
+    情報のある辺も近くの辺の情報を使って計算(自分の辺情報を優先)
+    
+
+
+
+    100ケース
+
+    
+    1000ケース
+
+    init_cost:3000
+    cost_range:8
+    coef:5
 */
