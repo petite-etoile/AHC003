@@ -6,5 +6,5 @@
 パラメータ
 cost_range: 8
 init_cost: 3000
-coef: 10
-Score = 936892902
+coef: 5
+Score = 946390474

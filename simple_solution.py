@@ -7,7 +7,7 @@ for _ in range(query_num):
     #縦に動く
     if si_k < ti_k: #下
         ans += "D" * (ti_k - si_k)
-    else: #左
+    else: #上
         ans += "U" * (si_k - ti_k)
 
     #横に動く
@@ -18,3 +18,7 @@ for _ in range(query_num):
     
     print(ans)
     path_length = input() #出力したパスの長さ * ノイズ
+
+
+
+
