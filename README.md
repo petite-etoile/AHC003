@@ -36,7 +36,8 @@
 ![解説スライド24](pdf/how_to_solve_24.jpeg)
 ![解説スライド25](pdf/how_to_solve_25.jpeg)
 ### 解法7(パス内の同じ列の長さで重みづけ(二乗))
-    M.cpp![解説スライド26](pdf/how_to_solve_26.jpeg)
+    M.cpp
+![解説スライド26](pdf/how_to_solve_26.jpeg)
 ![解説スライド27](pdf/how_to_solve_27.jpeg)
 
 ### 解法8(始めの方は情報を得るためのパス)
